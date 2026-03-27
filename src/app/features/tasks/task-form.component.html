@@ -1,0 +1,83 @@
+<div class="task-form-container">
+  <div class="form-card">
+    <div class="form-header">
+      <h1>{{ isEditMode ? 'Edit Task' : 'Create New Task' }}</h1>
+      <p>{{ isEditMode ? 'Update your task details' : 'Add a new task to your list' }}</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-alert">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+      <!-- Title -->
+      <div class="form-group">
+        <label for="title">Title *</label>
+        <input
+          type="text"
+          id="title"
+          formControlName="title"
+          placeholder="Enter task title"
+          [class.error]="title?.invalid && title?.touched"
+        />
+        <div class="error-message" *ngIf="title?.invalid && title?.touched">
+          <span *ngIf="title?.errors?.['required']">Title is required</span>
+          <span *ngIf="title?.errors?.['minlength']">Title must be at least 3 characters</span>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="4"
+          placeholder="Describe your task (optional)"
+          [class.error]="description?.invalid && description?.touched"
+        ></textarea>
+        <div class="character-count" *ngIf="description?.value">
+          {{ description?.value.length }}/500 characters
+        </div>
+      </div>
+
+      <!-- Completed Status (for edit mode) -->
+      <div class="form-group" *ngIf="isEditMode">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            formControlName="completed"
+            class="task-checkbox"
+          />
+          <span>Mark as completed</span>
+        </label>
+      </div>
+
+      <!-- Due Date -->
+      <div class="form-group">
+        <label for="due_date">Due Date</label>
+        <input
+          type="datetime-local"
+          id="due_date"
+          formControlName="due_date"
+          [class.error]="due_date?.invalid && due_date?.touched"
+        />
+        <div class="help-text">Leave empty if no deadline</div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="cancel()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-submit" [disabled]="taskForm.invalid || loading">
+          <span *ngIf="!loading">{{ isEditMode ? 'Update Task' : 'Create Task' }}</span>
+          <span *ngIf="loading" class="loading-spinner">
+            <span class="spinner"></span>
+            {{ isEditMode ? 'Updating...' : 'Creating...' }}
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

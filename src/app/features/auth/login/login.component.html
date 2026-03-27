@@ -1,0 +1,52 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Welcome Back</h1>
+      <p>Sign in to your account</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="username">Username or Email</label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          [class.error]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched"
+        />
+        <div class="error-message" *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
+          Username is required
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+        />
+        <div class="error-message" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          Password must be at least 6 characters
+        </div>
+      </div>
+
+      <div class="error-alert" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <button type="submit" class="login-button" [disabled]="loginForm.invalid || loading">
+        <span *ngIf="!loading">Sign In</span>
+        <span *ngIf="loading">
+          <span class="spinner"></span> Signing in...
+        </span>
+      </button>
+
+      <div class="register-link">
+        Don't have an account?
+        <a routerLink="/register">Sign up</a>
+      </div>
+    </form>
+  </div>
+</div>
