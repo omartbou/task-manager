@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -15,61 +15,51 @@ import { Task } from '../../shared/models/task.model';
 export class DashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private taskService = inject(TaskService);
+  private cdr = inject(ChangeDetectorRef);  // ✅ add this
+  private ngZone = inject(NgZone);          // ✅ add this
 
   tasks: Task[] = [];
-  loading = true;
+  loading = false;                          // ✅ start as false, not true
   currentUser = this.authService.getCurrentUser();
   errorMessage = '';
 
-  stats = {
-    total: 0,
-    completed: 0,
-    pending: 0
-  };
+  stats = { total: 0, completed: 0, pending: 0 };
 
   ngOnInit() {
     this.loadTasks();
   }
 
   loadTasks() {
-    this.loading = true;
-    this.errorMessage = '';
-    console.log('Dashboard: Loading tasks...');
+    this.ngZone.run(() => {               // ✅ ensure runs inside Angular zone
+      this.loading = true;
+      this.errorMessage = '';
+      this.cdr.detectChanges();           // ✅ force spinner to show
 
-    this.taskService.getTasks().subscribe({
-      next: (response: any) => {
-        console.log('Dashboard: Raw response', response);
-
-        try {
-          // Handle different response structures
+      this.taskService.getTasks().subscribe({
+        next: (response: any) => {
           let tasksArray: Task[] = [];
 
           if (Array.isArray(response)) {
             tasksArray = response;
-          } else if (response && response.data && Array.isArray(response.data)) {
+          } else if (response?.data && Array.isArray(response.data)) {
             tasksArray = response.data;
-          } else if (response && response.tasks && Array.isArray(response.tasks)) {
+          } else if (response?.tasks && Array.isArray(response.tasks)) {
             tasksArray = response.tasks;
           } else {
-            console.error('Dashboard: Unexpected response format', response);
             this.errorMessage = 'Invalid data format from server';
           }
 
           this.tasks = tasksArray;
-          console.log('Dashboard: Processed tasks count', this.tasks.length);
           this.calculateStats();
-        } catch (err) {
-          console.error('Dashboard: Error processing tasks', err);
-          this.errorMessage = 'Error processing tasks data';
-        } finally {
           this.loading = false;
+          this.cdr.detectChanges();       // ✅ force table to render
+        },
+        error: (error) => {
+          this.errorMessage = error.error?.detail || 'Failed to load tasks';
+          this.loading = false;
+          this.cdr.detectChanges();       // ✅ force error state to render
         }
-      },
-      error: (error) => {
-        console.error('Dashboard: Error loading tasks', error);
-        this.errorMessage = error.error?.detail || 'Failed to load tasks';
-        this.loading = false;
-      }
+      });
     });
   }
 
@@ -85,6 +75,7 @@ export class DashboardComponent implements OnInit {
       next: () => {
         task.completed = !task.completed;
         this.calculateStats();
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Dashboard: Error updating task', error);
@@ -99,6 +90,7 @@ export class DashboardComponent implements OnInit {
         next: () => {
           this.tasks = this.tasks.filter(t => t.id !== id);
           this.calculateStats();
+          this.cdr.detectChanges();
         },
         error: (error) => {
           console.error('Dashboard: Error deleting task', error);
